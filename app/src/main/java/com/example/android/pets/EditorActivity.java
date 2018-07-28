@@ -37,7 +37,6 @@ import com.example.android.pets.pets.PetDbHelper;
  * Allows user to create a new pet or edit an existing one.
  */
 public class EditorActivity extends AppCompatActivity {
-
         /** EditText field to enter the pet's name */
         private EditText mNameEditText;
 
