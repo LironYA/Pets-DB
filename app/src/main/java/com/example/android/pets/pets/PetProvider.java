@@ -7,6 +7,9 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.util.Log;
+
+import com.example.android.pets.pets.PetContract.PetEntry;
 
 public class PetProvider extends ContentProvider {
     private static final int PETS = 100;
@@ -51,7 +54,7 @@ public class PetProvider extends ContentProvider {
                 // For the PETS code, query the pets table directly with the given
                 // projection, selection, selection arguments, and sort order. The cursor
                 // could contain multiple rows of the pets table.
-                // TODO: Perform database query on pets table
+                cursor = database.query(PetEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
                 break;
             case PET_ID:
                 // For the PET_ID code, extract out the ID from the URI.
@@ -62,12 +65,12 @@ public class PetProvider extends ContentProvider {
                 // For every "?" in the selection, we need to have an element in the selection
                 // arguments that will fill in the "?". Since we have 1 question mark in the
                 // selection, we have 1 String in the selection arguments' String array.
-                selection = PetContract.PetEntry._ID + "=?";
+                selection = PetEntry._ID + "=?";
                 selectionArgs = new String[] { String.valueOf(ContentUris.parseId(uri)) };
 
                 // This will perform a query on the pets table where the _id equals 3 to return a
                 // Cursor containing that row of the table.
-                cursor = database.query(PetContract.PetEntry.TABLE_NAME, projection, selection, selectionArgs,
+                cursor = database.query(PetEntry.TABLE_NAME, projection, selection, selectionArgs,
                         null, null, sortOrder);
                 break;
             default:
@@ -75,19 +78,40 @@ public class PetProvider extends ContentProvider {
         }
         return cursor;
     }
-    
+
 
     /**
      * Insert new data into the provider with the given ContentValues.
      */
     @Override
     public Uri insert(Uri uri, ContentValues contentValues) {
-        return null;
+        final int match = sUriMatcher.match(uri);
+        switch (match) {
+            // Only one case, we can only add a row not update one
+            case PETS:
+                return insertPet(uri, contentValues);
+            default:
+                throw new IllegalArgumentException("Insertion is not supported for " + uri);
+        }
     }
 
     /**
-     * Updates the data at the given selection and selection arguments, with the new ContentValues.
+     * Insert a pet into the database with the given content values. Return the new content URI
+     * for that specific row in the database.
      */
+    private Uri insertPet(Uri uri, ContentValues values) {
+        // Get writeable database
+        SQLiteDatabase database = mDbHelper.getWritableDatabase();
+        // Insert the new pet with the given values
+        long id = database.insert(PetEntry.TABLE_NAME, null, values);
+        // Defines an object to contain the new values to insert
+        if (id == -1) {
+            Log.e(LOG_TAG, "Failed to insert row for " + uri);
+            return null;
+        }
+
+        return ContentUris.withAppendedId(uri, id);
+    }
     @Override
     public int update(Uri uri, ContentValues contentValues, String selection, String[] selectionArgs) {
         return 0;

@@ -16,12 +16,12 @@
 package com.example.android.pets;
 
 import android.content.ContentValues;
-import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Editable;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -29,9 +29,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.example.android.pets.pets.PetContract.PetEntry;
-import com.example.android.pets.pets.PetDbHelper;
 
 /**
  * Allows user to create a new pet or edit an existing one.
@@ -39,10 +39,7 @@ import com.example.android.pets.pets.PetDbHelper;
 public class EditorActivity extends AppCompatActivity {
 
     /** EditText field to enter the pet's name */
-    private EditText mNameEditText = (EditText) findViewById(R.id.edit_pet_name);
-
-    private PetDbHelper mDbHelper;
-
+    private EditText mNameEditText;
 
     /** EditText field to enter the pet's breed */
     private EditText mBreedEditText;
@@ -57,32 +54,47 @@ public class EditorActivity extends AppCompatActivity {
      * Gender of the pet. The possible values are:
      * 0 for unknown gender, 1 for male, 2 for female.
      */
-    private int mGender = 0;
-    private void InsertPet() {
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        String nameString = mNameEditText.getText().toString().trim();
-
-        values.put(PetEntry.COLUMN_PET_NAME, nameString);
-
-
-    }
+    private int mGender = PetEntry.GENDER_UNKNOWN;
     @Override
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_editor);
 
         // Find all relevant views that we will need to read user input from
         mNameEditText = (EditText) findViewById(R.id.edit_pet_name);
-        Editable nameEditor = mNameEditText.getText();
-        String name = nameEditor.toString();
         mBreedEditText = (EditText) findViewById(R.id.edit_pet_breed);
         mWeightEditText = (EditText) findViewById(R.id.edit_pet_weight);
         mGenderSpinner = (Spinner) findViewById(R.id.spinner_gender);
 
         setupSpinner();
     }
+    private void InsertPet() {
 
+        String nameString = mNameEditText.getText().toString().trim();
+        String breedString = mBreedEditText.getText().toString().trim();
+        String weightString = mWeightEditText.getText().toString().trim();
+        int weight = Integer.parseInt(weightString);
+        // Create a ContentValues object where column names are the keys,
+        // and pet attributes from the editor are the values.
+        ContentValues values = new ContentValues();
+        values.put(PetEntry.COLUMN_PET_NAME, nameString);
+        values.put(PetEntry.COLUMN_PET_BREED, breedString);
+        values.put(PetEntry.COLUMN_PET_GENDER, mGender);
+        values.put(PetEntry.COLUMN_PET_WEIGHT, weight);
+        // Insert a new pet into the provider, returning the content URI for the new pet.
+        Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
+        // Show a toast message depending on whether or not the insertion was successful
+        Log.e("Getting the URI",  "URI" + newUri);
+        if (newUri == null) {
+            // If the new content URI is null, then there was an error with insertion.
+            Toast.makeText(this, getString(R.string.editor_insert_pet_failed),
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            // Otherwise, the insertion was successful and we can display a toast.
+            Toast.makeText(this, getString(R.string.editor_insert_pet_successful),
+                    Toast.LENGTH_SHORT).show();
+        }}
 
     /**
      * Setup the dropdown spinner that allows the user to select the gender of the pet.

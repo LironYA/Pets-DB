@@ -5,6 +5,9 @@ import android.provider.BaseColumns;
 
 //Class is final because it's just a class to providing constants and there no need to import or extend
 public final class PetContract {
+    // To prevent someone from accidentally instantiating the contract class,
+    // give it an empty constructor.
+    private PetContract() {}
     // we set this up as a string constant whose value is the same as that from the AndroidManifest
     public static final String CONTENT_AUTHORITY = "com.example.android.pets";
     //we concatenate the CONTENT_AUTHORITY constant with the scheme “content://” we will create the BASE_CONTENT_URI which will be shared by every URI associated with PetContract:
